@@ -1,0 +1,78 @@
+1. from keras.models import Sequential
+2. from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+3. from keras.optimi
+zers import Adam
+4. from keras.preprocessing.image import ImageDataGenerator
+5.
+6. # Image dimensions
+7. img_width, img_height = 150, 150
+8.
+9. """
+10. Creates a CNN model
+11. p:Dropout rate
+12. input_shape:Shape of input
+13. """
+14. def create_model(p, input_shape=(32, 32, 3)):
+15. # Initialising the CNN
+16. model = Sequential()
+17. # Convolution + Pooling Layer
+18. model.add(Conv2D(32, (3, 3), padding='same', input_shape=input_shape, activation='relu'))
+19. model.add(MaxPooling2D(pool_size=(2, 2)))
+20. # Convolution + Pooling Layer
+21. model.add(Conv2D(32, (3, 3), padding='same', activation='relu'))
+22. model.add(MaxPooling2D(pool_size=(2, 2)))
+23. # Convolution + Pooling Layer
+24. model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+25. model.add(MaxPooling2D(pool_size=(2, 2)))
+26. # Convolution + Pooling Layer
+27. model.add(Conv2D(64, (3, 3), padding='same', activation='relu'))
+28. model.add(MaxPooling2D(pool_size=(2, 2)))
+29.
+30. # Flattening
+31. model.add(Flatten())
+32. # Fully connection
+33. model.add(Dense(64, activation='relu'))
+34. model.add(Dropout(p))
+35. model.add(Dense(64, activation='relu'))
+36. model.add(Dense(64, activation='relu'))
+37. model.add(Dropout(p/2))
+38. model.add(Dense(1, activation='sigmoid'))
+39.
+40. # Compiling the CNN
+41. optimizer = Adam(lr=1e-3)
+42. metrics=['accuracy']
+43. model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=metrics)
+44. return model
+45. """
+46. Fitting the CNN to the images.
+47. """
+48. def run_training(bs=32, epochs=10):
+49.
+50. train_datagen = ImageDataGenerator(rescale = 1./255,
+51. shear_range = 0.2,
+52. zoom_range = 0.2,
+53. horizontal_flip = True)
+54. test_datagen = ImageDataGenerator(rescale = 1./255)
+55.
+56. training_set = train_datagen.flow_from_directory('dataset/training_set',
+57. target_size = (img_width, img_height),
+58. batch_size = bs,
+59. class_mode = 'binary')
+60.
+61. test_set = test_datagen.flow_from_directory('dataset/test_set',
+62. target_size = (img_width, img_height),
+63. batch_size = bs,
+64. class_mode = 'binary')
+65.
+66. model = create_model(p=0.6, input_shape=(img_width, img_height, 3))
+67. model.fit_generator(training_set,
+68. steps_per_epoch=8000/bs,
+69. epochs = epochs,
+70. validation_data = test_set,
+71. validation_steps = 2000/bs)
+72. def main():
+73. run_training(bs=32, epochs=100)
+74.
+75. """ Main """
+76. if __name__ == "__main__":
+77. main()
